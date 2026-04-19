@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KANGXIN IP Copilot</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --red:    #C8102E;
+    --dark:   #1A1A1A;
+    --text:   #333333;
+    --text2:  #555555;
+    --border: #E5E5E5;
+    --bg:     #F7F7F7;
+    --fn-cn:  'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif;
+    --fn-en:  'Inter','Segoe UI','Helvetica Neue',Arial,sans-serif;
+  }
+
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--fn-cn);
+    color: var(--text);
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    font-size: 14px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  body.lang-en { font-family: var(--fn-en); }
+
+  /* ── BILINGUAL TOGGLE ── */
+  .cn { display: inline; } .en { display: none; }
+  div.cn, p.cn { display: block; } div.en, p.en { display: none; }
+  body.lang-en .cn { display: none !important; }
+  body.lang-en .en { display: inline !important; }
+  body.lang-en div.en, body.lang-en p.en { display: block !important; }
+
+  .lang-toggle {
+    position: fixed; top: 20px; right: 28px; z-index: 1000;
+    display: flex; gap: 0; background: #fff;
+    border: 1px solid var(--border); border-radius: 20px;
+    padding: 3px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    cursor: pointer; user-select: none;
+  }
+  .lang-toggle .lb {
+    padding: 5px 16px; font-size: 11px; font-weight: 600;
+    border-radius: 16px; font-family: var(--fn-en);
+    color: var(--text2); background: transparent;
+    transition: all .3s; letter-spacing: 0.5px;
+  }
+  .lang-toggle .lb.on {
+    background: var(--red); color: #fff;
+    box-shadow: 0 2px 8px rgba(200,16,46,0.3);
+  }
+
+  /* ── PAGE ── */
+  .page {
+    width: 210mm; height: 297mm;
+    position: relative; overflow: hidden;
+    page-break-after: always; background: #fff;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .page-accent {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 4px; background: var(--red);
+  }
+
+  .page-inner {
+    position: absolute; top: 4px; left: 0; right: 0; bottom: 0;
+    padding: 28px 48px 24px;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+  }
+  .page-inner.p2 {
+    justify-content: space-evenly;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  }
+  .header img { height: 24px; opacity: 0.9; }
+  .header .lbl {
+    font-family: var(--fn-en); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--text2);
+  }
+
+  /* ── HERO ── */
+  .hero { display: flex; align-items: center; padding: 0; }
+  .hero-text { flex: 1; padding-right: 28px; }
+  .hero-tag {
+    font-family: var(--fn-en); font-size: 12px; font-weight: 700;
+    letter-spacing: 2.5px; text-transform: uppercase;
+    color: #fff; background: var(--red);
+    padding: 5px 14px; border-radius: 3px;
+    display: inline-block; margin-bottom: 12px;
+  }
+  .hero-text h1 {
+    font-family: var(--fn-en); font-size: 42px; font-weight: 800;
+    line-height: 1.05; color: var(--dark); letter-spacing: -1.5px; margin-bottom: 6px;
+  }
+  .hero-text .h1-sub {
+    font-size: 16px; font-weight: 700;
+    color: var(--text); letter-spacing: 0; margin-bottom: 12px;
+  }
+  .hdiv { width: 48px; height: 3px; background: var(--red); margin-bottom: 12px; }
+  .hero-sub { font-size: 14.5px; color: var(--text2); line-height: 1.7; }
+  .hero-img { flex: 0 0 155px; text-align: center; }
+  .hero-img img { width: 150px; filter: drop-shadow(0 8px 20px rgba(0,0,0,0.1)); }
+
+  /* ── SCENE BANNER ── */
+  .scene-banner {
+    background: var(--dark); color: #fff;
+    padding: 18px 28px; border-radius: 3px;
+  }
+  .scene-banner .sc-title {
+    font-size: 14px; font-weight: 700; margin-bottom: 12px; opacity: 0.95;
+  }
+  .scene-banner .sc-title em { font-style: normal; color: #F5A623; }
+  .scene-steps { display: flex; align-items: center; }
+  .sc-step { flex: 1; text-align: center; padding: 0 8px; }
+  .sc-step .num {
+    font-family: var(--fn-en); font-size: 24px; font-weight: 800;
+    color: var(--red); opacity: 0.7; line-height: 1;
+  }
+  .sc-step .txt { font-size: 12.5px; opacity: 0.9; line-height: 1.45; margin-top: 5px; }
+  .sc-arrow { flex-shrink: 0; opacity: 0.25; }
+  .sc-arrow svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; }
+
+  /* ── METRICS ── */
+  .metrics {
+    display: flex; border: 1px solid var(--border);
+    border-radius: 2px; overflow: hidden;
+  }
+  .m-item {
+    flex: 1; padding: 16px 10px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .m-item:last-child { border-right: none; }
+  .m-val {
+    font-family: var(--fn-en); font-size: 30px; font-weight: 800;
+    color: var(--dark); letter-spacing: -1px; line-height: 1.15;
+  }
+  .m-val .arr { color: var(--red); font-size: 20px; margin: 0 3px; }
+  .m-lbl { font-size: 12px; color: var(--text2); font-weight: 500; margin-top: 5px; line-height: 1.45; }
+
+  /* ── USE CASE CARDS ── */
+  .s-label {
+    font-family: var(--fn-en); font-size: 11px; font-weight: 700;
+    letter-spacing: 3px; text-transform: uppercase;
+    color: var(--red); margin-bottom: 5px;
+  }
+  .s-title {
+    font-size: 20px; font-weight: 700; color: var(--dark);
+    line-height: 1.25; margin-bottom: 10px;
+  }
+
+  .use-grid { display: flex; gap: 14px; }
+  .use-card {
+    flex: 1; padding: 14px 16px; border-radius: 3px;
+    background: var(--bg); border-left: 3px solid var(--red);
+  }
+  .use-card .uc-q {
+    font-size: 13px; font-weight: 700; color: var(--dark);
+    margin-bottom: 5px; line-height: 1.45;
+  }
+  .use-card .uc-q::before {
+    content: 'Q '; font-family: var(--fn-en); color: var(--red);
+    font-weight: 800; font-size: 11px; margin-right: 2px;
+  }
+  .use-card .uc-a {
+    font-size: 12px; color: var(--text2); line-height: 1.55;
+  }
+  .use-card .uc-a::before {
+    content: 'AI '; font-family: var(--fn-en); color: var(--red);
+    font-weight: 800; font-size: 10px; margin-right: 2px;
+  }
+
+  /* ── DIFF ROW ── */
+  .diff-row {
+    display: flex; gap: 0; border: 1px solid var(--border);
+    border-radius: 2px; overflow: hidden;
+  }
+  .diff-item {
+    flex: 1; padding: 14px 16px; border-right: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .diff-item:last-child { border-right: none; }
+  .diff-icon {
+    flex-shrink: 0; width: 32px; height: 32px;
+    background: rgba(200,16,46,0.06); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .diff-icon svg { width: 16px; height: 16px; stroke: var(--red); fill: none; stroke-width: 1.8; }
+  .diff-body h4 { font-size: 13.5px; font-weight: 700; color: var(--dark); margin-bottom: 3px; }
+  .diff-body p { font-size: 12px; color: var(--text2); line-height: 1.55; }
+
+  /* ── TECH GRID ── */
+  .tech-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .tech-item {
+    padding: 16px 18px; border-left: 3px solid var(--red);
+    background: var(--bg); border-radius: 0 2px 2px 0;
+  }
+  .tech-item h4 {
+    font-size: 14.5px; font-weight: 700; color: var(--dark);
+    margin-bottom: 5px; display: flex; align-items: center; gap: 7px;
+  }
+  .tech-item h4 svg { width: 18px; height: 18px; opacity: 0.65; }
+  .tech-item p { font-size: 12.5px; color: var(--text2); line-height: 1.6; }
+
+  /* ── COMPARISON ── */
+  .comparison {
+    display: flex; border: 1px solid var(--border);
+    border-radius: 2px; overflow: hidden;
+  }
+  .cmp { flex: 1; padding: 16px 20px; }
+  .cmp.before { background: var(--bg); border-right: 1px solid var(--border); }
+  .cmp h4 {
+    font-family: var(--fn-en); font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 10px; padding-bottom: 7px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cmp.before h4 { color: var(--text2); }
+  .cmp.after h4 { color: var(--red); }
+  .cmp ul { list-style: none; }
+  .cmp li {
+    font-size: 13px; padding: 4px 0;
+    display: flex; gap: 7px; line-height: 1.5; color: var(--text);
+  }
+  .cmp li .ic { flex-shrink: 0; }
+  .cmp.before .ic { color: var(--text2); }
+  .cmp.after .ic { color: var(--red); }
+  .cmp li strong { color: var(--dark); font-weight: 700; }
+
+  /* ── CTA BAR ── */
+  .cta-bar {
+    background: var(--red); color: #fff;
+    padding: 20px 32px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .cta-bar .cta-text h3 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .cta-bar .cta-text p { font-size: 13px; opacity: 0.92; }
+  .cta-bar .cta-booth {
+    font-family: var(--fn-en); font-size: 42px; font-weight: 800;
+    letter-spacing: -1px; opacity: 0.95;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 14px; border-top: 1px solid var(--border);
+  }
+  .footer .f-logo { height: 19px; opacity: 0.85; margin-bottom: 3px; display: block; }
+  .footer .f-info { font-size: 10.5px; color: var(--text2); line-height: 1.55; }
+  .footer .f-center { text-align: center; }
+  .footer .f-event { font-size: 12px; font-weight: 700; color: var(--dark); }
+  .footer .f-booth { font-size: 11px; color: var(--red); font-weight: 600; margin-top: 1px; }
+  .footer .qr img {
+    width: 54px; height: 54px;
+    border: 1px solid var(--border); border-radius: 2px; display: block;
+  }
+  .footer .qr-lbl { font-size: 9px; color: var(--text2); margin-top: 2px; text-align: center; }
+
+  /* ── PRINT ── */
+  @media print {
+    .lang-toggle { display: none !important; }
+    .page { box-shadow: none; }
+  }
+  @media screen {
+    .page { margin: 24px auto; box-shadow: 0 2px 48px rgba(0,0,0,0.09); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Language Toggle -->
+<div class="lang-toggle" onclick="toggleLang()">
+  <div class="lb on" id="btn-cn">中文</div>
+  <div class="lb" id="btn-en">EN</div>
+</div>
+
+<!-- ================================================================ PAGE 1 -->
+<div class="page">
+  <div class="page-accent"></div>
+  <div class="page-inner">
+
+    <!-- Header -->
+    <div class="header">
+      <img src="kx_logo.png" alt="KANGXIN">
+      <div class="lbl">Kangxin IP Platform &nbsp;&middot;&nbsp; AI-Native</div>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-text">
+        <div class="hero-tag">
+          <span class="cn">康信 IP 平台已上线</span>
+          <span class="en">Now Available on Kangxin IP Platform</span>
+        </div>
+        <h1>IP Copilot</h1>
+        <div class="h1-sub">
+          <span class="cn">IP 智能助理</span>
+          <span class="en">Your AI-Powered IP Knowledge Partner</span>
+        </div>
+        <div class="hdiv"></div>
+        <div class="hero-sub">
+          <span class="cn">内嵌于康信 IP 管理平台的 AI 智能副驾——随时提问，即刻获得基于真实案例库与法规库的商标专业回答，支持中英文双语。</span>
+          <span class="en">An AI copilot embedded natively in Kangxin's IP management platform — ask any trademark question in Chinese or English, get a professional answer grounded in real case law &amp; regulations.</span>
+        </div>
+      </div>
+      <div class="hero-img">
+        <img src="kx_robot.png" alt="IP Copilot">
+      </div>
+    </div>
+
+    <!-- Scene: 4-step flow -->
+    <div class="scene-banner">
+      <div class="sc-title">
+        <span class="cn">使用场景：在康信 IP 平台中，<em>30 秒获得专业答案</em></span>
+        <span class="en">How it works: <em>Professional answers in 30 seconds</em></span>
+      </div>
+      <div class="scene-steps">
+        <div class="sc-step">
+          <div class="num">1</div>
+          <div class="txt">
+            <span class="cn">在平台任意页面<br>点击 AI 助手入口</span>
+            <span class="en">Click the AI assistant<br>on any platform page</span>
+          </div>
+        </div>
+        <div class="sc-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="14 7 19 12 14 17"/></svg></div>
+        <div class="sc-step">
+          <div class="num">2</div>
+          <div class="txt">
+            <span class="cn">用自然语言提问<br>任何 IP 业务问题</span>
+            <span class="en">Ask any IP question<br>in natural language</span>
+          </div>
+        </div>
+        <div class="sc-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="14 7 19 12 14 17"/></svg></div>
+        <div class="sc-step">
+          <div class="num">3</div>
+          <div class="txt">
+            <span class="cn">AI 从案例库、法规库<br>智能检索匹配</span>
+            <span class="en">AI retrieves from<br>case law &amp; regulations</span>
+          </div>
+        </div>
+        <div class="sc-arrow"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="14 7 19 12 14 17"/></svg></div>
+        <div class="sc-step">
+          <div class="num">4</div>
+          <div class="txt">
+            <span class="cn">获得专业回答<br>附带原文出处引用</span>
+            <span class="en">Get a cited answer<br>with source references</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="metrics">
+      <div class="m-item">
+        <div class="m-val">2h <span class="arr">&rarr;</span> 30s</div>
+        <div class="m-lbl">
+          <span class="cn">问题响应时间</span>
+          <span class="en">Response Time</span>
+        </div>
+      </div>
+      <div class="m-item">
+        <div class="m-val">2</div>
+        <div class="m-lbl">
+          <span class="cn">专业知识库<br>商标案例库 &middot; 法规库</span>
+          <span class="en">Knowledge Bases<br>TM Case Law &middot; Regulations</span>
+        </div>
+      </div>
+      <div class="m-item">
+        <div class="m-val">24/7</div>
+        <div class="m-lbl">
+          <span class="cn">随时可用<br>无需等待同事回复</span>
+          <span class="en">Always Available<br>No Waiting on Colleagues</span>
+        </div>
+      </div>
+      <div class="m-item">
+        <div class="m-val">0</div>
+        <div class="m-lbl">
+          <span class="cn">幻觉容忍度<br>不确定即诚实告知</span>
+          <span class="en">Hallucination Tolerance<br>Honest When Uncertain</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Try It -->
+    <div>
+      <div class="s-label">Try It Yourself</div>
+      <div class="s-title">
+        <span class="cn">您可以这样提问 —— 来展位现场体验</span>
+        <span class="en">Questions you can ask — see results live at our booth</span>
+      </div>
+      <div class="use-grid">
+        <div class="use-card">
+          <div class="uc-q">
+            <span class="cn">马德里国际注册转为国内申请的流程和时限？</span>
+            <span class="en">Procedure &amp; timeline for converting a Madrid registration to a national application?</span>
+          </div>
+          <div class="uc-a">
+            <span class="cn">精准匹配《商标法实施条例》相关条款，30 秒返回完整流程。</span>
+            <span class="en">Pinpoints relevant regulation clauses, returns the full process in 30 seconds.</span>
+          </div>
+        </div>
+        <div class="use-card">
+          <div class="uc-q">
+            <span class="cn">商标驳回复审中"近似商标"的最新审查标准？</span>
+            <span class="en">Latest examination standards for "similar trademarks" in rejection reviews?</span>
+          </div>
+          <div class="uc-a">
+            <span class="cn">检索近两年复审案例，归纳审查要点并附判例引用。</span>
+            <span class="en">Searches recent review cases, summarizes criteria with case citations.</span>
+          </div>
+        </div>
+        <div class="use-card">
+          <div class="uc-q">
+            <span class="cn">商标异议程序中，如何证明"在先使用并有一定影响"？</span>
+            <span class="en">How to prove "prior use with certain influence" in trademark opposition?</span>
+          </div>
+          <div class="uc-a">
+            <span class="cn">检索相关案例与审查指南，梳理证据类型及举证要点。</span>
+            <span class="en">Retrieves relevant cases &amp; guidelines, outlines evidence types &amp; key points.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Differentiators -->
+    <div class="diff-row">
+      <div class="diff-item">
+        <div class="diff-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <div class="diff-body">
+          <h4><span class="cn">回答基于真实数据</span><span class="en">Grounded in Real Data</span></h4>
+          <p><span class="cn">非互联网泛泛信息，基于商标专业案例库与法规库</span><span class="en">Not generic internet info — from verified trademark case law &amp; regulations</span></p>
+        </div>
+      </div>
+      <div class="diff-item">
+        <div class="diff-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="diff-body">
+          <h4><span class="cn">不确定就诚实说</span><span class="en">Honest When Unsure</span></h4>
+          <p><span class="cn">零幻觉设计，绝不编造看似正确的答案</span><span class="en">Zero hallucination design — never fabricates answers</span></p>
+        </div>
+      </div>
+      <div class="diff-item">
+        <div class="diff-icon">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="diff-body">
+          <h4><span class="cn">数据完全私有</span><span class="en">Fully Private</span></h4>
+          <p><span class="cn">知识库在您自己的环境中，数据不外传</span><span class="en">Knowledge stays in your environment — no data leaves</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div>
+        <img class="f-logo" src="kx_logo.png" alt="KANGXIN">
+        <div class="f-info">
+          <span class="cn">康信知识产权</span>
+          <span class="en">Kangxin Partners, P.C.</span>
+          &nbsp;&middot;&nbsp; www.kangxin.com
+        </div>
+      </div>
+      <div class="f-center">
+        <div class="f-event">INTA 2026 Annual Meeting</div>
+        <div class="f-booth">Booth #711</div>
+      </div>
+      <div>
+        <div class="qr"><img src="kx_qr.png" alt="QR"></div>
+        <div class="qr-lbl">
+          <span class="cn">扫码预约演示</span>
+          <span class="en">Book a Demo</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ================================================================ PAGE 2 -->
+<div class="page">
+  <div class="page-accent"></div>
+  <div class="page-inner p2">
+
+    <!-- Header -->
+    <div class="header">
+      <img src="kx_logo.png" alt="KANGXIN">
+      <div class="lbl">IP Copilot &nbsp;&middot;&nbsp; Architecture &amp; Value</div>
+    </div>
+
+    <!-- Tech Architecture -->
+    <div>
+      <div class="s-label">How It Works</div>
+      <div class="s-title">
+        <span class="cn">为什么 IP Copilot 的回答值得信赖？</span>
+        <span class="en">Why You Can Trust IP Copilot's Answers</span>
+      </div>
+      <div class="tech-grid">
+        <div class="tech-item">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="cn">RAG 智能检索</span>
+            <span class="en">RAG-Powered Retrieval</span>
+          </h4>
+          <p>
+            <span class="cn">每次提问先从知识库中精准检索相关段落，AI 基于真实材料生成回答，而非凭空编造</span>
+            <span class="en">Every query first retrieves relevant passages from the knowledge base — AI generates answers from real sources, never from thin air</span>
+          </p>
+        </div>
+        <div class="tech-item">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+            <span class="cn">IP 专业知识库</span>
+            <span class="en">IP-Specific Knowledge Base</span>
+          </h4>
+          <p>
+            <span class="cn">接入经过专家审核的案例库与法规库，聚焦商标注册、驳回复审、异议、撤三等核心业务</span>
+            <span class="en">Expert-curated case law and regulatory databases focused on trademark registration, reviews, oppositions &amp; cancellations</span>
+          </p>
+        </div>
+        <div class="tech-item">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span class="cn">防幻觉引擎</span>
+            <span class="en">Anti-Hallucination Engine</span>
+          </h4>
+          <p>
+            <span class="cn">多层校验确保回答准确性，遇到不确定的问题主动告知，而非给出误导性答案</span>
+            <span class="en">Multi-layer verification ensures accuracy — proactively flags uncertainty instead of producing misleading responses</span>
+          </p>
+        </div>
+        <div class="tech-item">
+          <h4>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span class="cn">平台原生集成</span>
+            <span class="en">Platform-Native Integration</span>
+          </h4>
+          <p>
+            <span class="cn">无需安装额外软件，直接在康信 IP 管理平台内使用，工作流程零中断</span>
+            <span class="en">No extra software — use it directly inside Kangxin's IP management platform, zero workflow disruption</span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison -->
+    <div>
+      <div class="s-label">With vs. Without</div>
+      <div class="s-title" style="font-size:16px; margin-bottom:8px;">
+        <span class="cn">同一个问题，两种工作体验</span>
+        <span class="en">Same Question, Two Work Experiences</span>
+      </div>
+      <div class="comparison">
+        <div class="cmp before">
+          <h4>Without Copilot</h4>
+          <ul>
+            <li><span class="ic">&mdash;</span><span><span class="cn">在多个系统和文件夹中逐一翻找</span><span class="en">Search across multiple systems and folders</span></span></li>
+            <li><span class="ic">&mdash;</span><span><span class="cn">打断资深同事工作来请教</span><span class="en">Interrupt senior colleagues for guidance</span></span></li>
+            <li><span class="ic">&mdash;</span><span><span class="cn">整个过程耗时 <strong>2 小时以上</strong></span><span class="en">Entire process takes <strong>2+ hours</strong></span></span></li>
+            <li><span class="ic">&mdash;</span><span><span class="cn">答案质量取决于当天谁有空</span><span class="en">Answer quality depends on who's available</span></span></li>
+          </ul>
+        </div>
+        <div class="cmp after">
+          <h4>With IP Copilot</h4>
+          <ul>
+            <li><span class="ic">&rarr;</span><span><span class="cn">在平台内直接提问，自然语言交互</span><span class="en">Ask directly in the platform, natural language</span></span></li>
+            <li><span class="ic">&rarr;</span><span><span class="cn">不打断任何人，独立获取答案</span><span class="en">Self-serve knowledge, no interruptions</span></span></li>
+            <li><span class="ic">&rarr;</span><span><span class="cn"><strong>30 秒</strong>返回专业回答 + 出处引用</span><span class="en">Professional answer in <strong>30 seconds</strong> with citations</span></span></li>
+            <li><span class="ic">&rarr;</span><span><span class="cn">7&times;24 可用，每次回答质量一致</span><span class="en">24/7 availability, consistent quality every time</span></span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-bar">
+      <div class="cta-text">
+        <h3>
+          <span class="cn">亲自体验 IP Copilot 的实力</span>
+          <span class="en">Experience IP Copilot in Person</span>
+        </h3>
+        <p>
+          <span class="cn">带上您的 IP 问题，来展位现场提问，30 秒见证 AI 如何回答。</span>
+          <span class="en">Bring your toughest IP question — watch AI answer it in 30 seconds.</span>
+        </p>
+      </div>
+      <div class="cta-booth">#711</div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <div>
+        <img class="f-logo" src="kx_logo.png" alt="KANGXIN">
+        <div class="f-info">
+          <span class="cn">康信知识产权</span>
+          <span class="en">Kangxin Partners, P.C.</span>
+          &nbsp;&middot;&nbsp; www.kangxin.com
+        </div>
+      </div>
+      <div class="f-center">
+        <div class="f-event">INTA 2026 Annual Meeting</div>
+        <div class="f-booth">Booth #711</div>
+      </div>
+      <div>
+        <div class="qr"><img src="kx_qr.png" alt="QR"></div>
+        <div class="qr-lbl">
+          <span class="cn">扫码预约演示</span>
+          <span class="en">Book a Demo</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // Auto-detect language from URL hash
+  if (window.location.hash === '#en') {
+    document.body.classList.add('lang-en');
+    document.getElementById('btn-cn').classList.remove('on');
+    document.getElementById('btn-en').classList.add('on');
+    document.documentElement.lang = 'en';
+  }
+
+  function toggleLang() {
+    var b = document.body;
+    var cn = document.getElementById('btn-cn');
+    var en = document.getElementById('btn-en');
+    if (b.classList.contains('lang-en')) {
+      b.classList.remove('lang-en');
+      cn.classList.add('on'); en.classList.remove('on');
+      document.documentElement.lang = 'zh-CN';
+    } else {
+      b.classList.add('lang-en');
+      en.classList.add('on'); cn.classList.remove('on');
+      document.documentElement.lang = 'en';
+    }
+  }
+</script>
+
+</body>
+</html>
