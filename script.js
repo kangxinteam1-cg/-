@@ -8,7 +8,7 @@ window.addEventListener('scroll', onScroll, { passive: true });
 onScroll();
 
 // Scroll reveal
-const revealTargets = document.querySelectorAll('.section-title, .about__text, .service, .post, .contact__item, .subscribe__form, .hero__stats');
+const revealTargets = document.querySelectorAll('.section-title, .about__text, .service, .post, .contact__item, .wechat__card, .hero__stats');
 revealTargets.forEach(el => el.classList.add('reveal'));
 const io = new IntersectionObserver((entries) => {
   entries.forEach(e => {
